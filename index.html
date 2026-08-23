@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nonet — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Rubik:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#211F2E; --dusk:#2B2A4A; --dusk-2:#3A3865;
+    --marigold:#F2A93B; --marigold-deep:#D98E1F;
+    --banyan:#3D7A5C; --banyan-light:#7FB89A;
+    --paper:#F7F3E9; --paper-dim:#EDE6D6; --line:rgba(33,31,46,0.10);
+    --danger:#C0503F;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#141225;font-family:'Rubik',sans-serif;display:flex;justify-content:center;padding:24px 12px;}
+  .device{width:390px;max-width:100%;background:var(--paper);border-radius:30px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,.45);border:8px solid #0f0e1c;min-height:740px;display:flex;flex-direction:column;}
+  header.top{background:linear-gradient(180deg,var(--ink),var(--dusk));color:var(--paper);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;}
+  .brand{font-family:'Fraunces',serif;font-weight:700;font-size:17px;display:flex;align-items:center;gap:7px;}
+  .brand .flame{color:var(--marigold);}
+  .pill{font-family:'JetBrains Mono',monospace;font-size:10px;display:flex;align-items:center;gap:6px;background:rgba(247,243,233,.08);border:1px solid rgba(247,243,233,.18);padding:4px 9px;border-radius:999px;cursor:pointer;}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--marigold);box-shadow:0 0 8px 2px rgba(242,169,59,.7);}
+  .dot.online{background:var(--banyan);box-shadow:0 0 8px 2px rgba(61,122,92,.6);}
+  main{flex:1;overflow-y:auto;padding:16px 16px 8px;}
+  nav.bottom{display:flex;justify-content:space-around;padding:10px 4px 16px;background:#fff;border-top:1px solid var(--line);}
+  .navitem{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8.5px;font-family:'JetBrains Mono',monospace;color:#b3b0c0;background:none;border:none;cursor:pointer;padding:4px;}
+  .navitem.active{color:var(--banyan);}
+  .navicon{font-size:16px;}
+
+  h1.page-title{font-family:'Fraunces',serif;font-size:21px;margin:2px 0 4px;color:var(--ink);}
+  .page-sub{font-size:12px;color:#7a7789;margin:0 0 14px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px;}
+  .card-title{font-family:'Fraunces',serif;font-weight:600;font-size:15px;margin:0 0 4px;display:flex;align-items:center;gap:6px;}
+  .muted{color:#7a7789;font-size:12px;}
+  .progress-track{height:5px;background:var(--paper-dim);border-radius:3px;margin-top:8px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--banyan-light),var(--banyan));}
+  button.primary{background:var(--marigold);color:var(--ink);border:none;border-radius:12px;padding:10px 14px;font-weight:600;font-size:13px;cursor:pointer;width:100%;margin-top:10px;}
+  button.primary:hover{background:var(--marigold-deep);}
+  button.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:8px 12px;font-size:12px;cursor:pointer;width:100%;margin-top:8px;}
+  input[type=text],textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;font-family:'Rubik',sans-serif;font-size:13px;margin-top:6px;background:#fff;}
+  textarea{resize:vertical;min-height:60px;}
+  .ans-box{margin-top:12px;background:var(--paper-dim);border-radius:12px;padding:12px;font-size:13px;line-height:1.5;color:var(--ink);}
+  .ans-source{font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--banyan);margin-top:8px;display:block;}
+  .level-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px;}
+  .lvl{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:500;cursor:pointer;border:none;}
+  .lvl.done{background:var(--banyan);color:#fff;}
+  .lvl.current{background:var(--marigold);color:var(--ink);box-shadow:0 0 0 2px var(--marigold-deep);}
+  .lvl.locked{background:var(--paper-dim);color:#c3c0d0;cursor:not-allowed;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:60;max-width:320px;text-align:center;}
+  .toast.show{opacity:1;}
+  .book-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .book-item button{background:none;border:none;color:var(--danger);font-size:11px;cursor:pointer;}
+  .badge{font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 7px;border-radius:999px;background:rgba(61,122,92,.12);color:var(--banyan);margin-left:6px;}
+  .badge.warn{background:rgba(192,80,63,.12);color:var(--danger);}
+
+  .bar{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;cursor:pointer;}
+  .bar-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;}
+  .bar-title{font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin:0;color:var(--ink);}
+  .bar-desc{font-size:11.5px;color:#7a7789;margin:2px 0 0;}
+  .chev{color:#c9c5d6;font-size:16px;margin-left:auto;}
+  .learn .bar-icon{background:#EAF0FF;} .games .bar-icon{background:#FCEBE3;}
+  .chat .bar-icon{background:#E1F7FA;} .world .bar-icon{background:#EAF6EE;}
+
+  .sub-tab-row{display:flex;gap:8px;margin-bottom:14px;}
+  .sub-tab{flex:1;text-align:center;padding:8px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:11px;font-family:'JetBrains Mono',monospace;cursor:pointer;color:#8a8798;}
+  .sub-tab.active{background:var(--dusk);color:#fff;border-color:var(--dusk);}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:80;}
+  .modal-backdrop.show{display:flex;}
+  .modal{background:#fff;border-radius:18px;padding:18px;width:300px;max-width:88%;}
+  .modal h3{font-family:'Fraunces',serif;font-size:16px;margin:0 0 6px;color:var(--danger);}
+  .modal p{font-size:12.5px;color:#5a5768;margin:0 0 10px;}
+  .modal-opt{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:12.5px;cursor:pointer;}
+  .modal-opt:hover{border-color:var(--marigold);}
+  .modal-cancel{text-align:center;font-size:11.5px;color:#8a8798;margin-top:6px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="device">
+  <header class="top">
+    <span class="brand"><span class="flame">◆</span> Nonet</span>
+    <button class="pill" onclick="toggleNet()">
+      <span class="dot" id="netDot"></span>
+      <span id="netLabel">OFFLINE</span>
+    </button>
+  </header>
+
+  <main id="main"></main>
+
+  <nav class="bottom">
+    <button class="navitem active" data-page="home" onclick="go('home')"><span class="navicon">⌂</span>Home</button>
+    <button class="navitem" data-page="learn" onclick="go('learn')"><span class="navicon">📘</span>Learn</button>
+    <button class="navitem" data-page="games" onclick="go('games')"><span class="navicon">🧮</span>Games</button>
+    <button class="navitem" data-page="chat" onclick="go('chat')"><span class="navicon">💬</span>Chatbot</button>
+    <button class="navitem" data-page="world" onclick="go('world')"><span class="navicon">🌍</span>Emerging</button>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+const state = {
+  online: false,
+  learnTab: 'academics',
+  academics: {
+    packs: [{id:'g8-sci', label:'Grade 8 · Science', sizeMB:180}],
+    storageUsedMB: 620, storageCapMB: 900,
+    quizScore: 0, quizTotal: 0, level: 'average'
+  },
+  games: { unlocked: 3, completed: [1,2] },
+  myBooks: [],
+  myBooksLimit: 3,
+  chatHistory: []
+};
+
+const lessonLibrary = [
+  {id:"c1", text:"Water expands when it freezes because its molecules form a hexagonal crystal structure, which takes up more space than liquid water. This makes ice less dense than liquid water, so ice floats."},
+  {id:"c2", text:"Photosynthesis is the process by which green plants use sunlight, water, and carbon dioxide to make glucose and release oxygen, mostly inside chloroplasts in the leaves."},
+  {id:"c3", text:"A magnet has a north pole and a south pole. Like poles repel each other, while opposite poles attract."},
+  {id:"c4", text:"Density is mass divided by volume. An object floats in a liquid if its density is lower than that liquid's density, and sinks if higher."},
+  {id:"c5", text:"The water cycle describes evaporation from oceans and rivers, condensation into clouds, precipitation as rain or snow, and water flowing back to the sea."}
+];
+
+function retrieve(query, corpus, topK=1){
+  const qWords = query.toLowerCase().replace(/[^a-z0-9\s]/g,"").split(/\s+/).filter(Boolean);
+  const scored = corpus.map(chunk => {
+    const cWords = chunk.text.toLowerCase().split(/\s+/);
+    let score = 0;
+    qWords.forEach(w => { if(cWords.some(cw => cw.includes(w))) score++; });
+    return {...chunk, score};
+  });
+  scored.sort((a,b)=>b.score-a.score);
+  return scored.slice(0, topK).filter(c=>c.score>0);
+}
+function mockAnswer(retrieved){
+  if(retrieved.length === 0){
+    return {text:"Nothing indexed on this device matches that yet. Try different words, or add relevant content first.", source:null};
+  }
+  return {text:retrieved[0].text, source:retrieved[0].id};
+}
+function speak(text){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+function allBookChunks(){ return state.myBooks.flatMap(b=>b.chunks); }
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+function toggleNet(){
+  state.online = !state.online;
+  document.getElementById('netDot').classList.toggle('online', state.online);
+  document.getElementById('netLabel').textContent = state.online ? "ONLINE · SYNCING" : "OFFLINE";
+  toast(state.online ? "Connected — syncing progress to cloud" : "Disconnected — app keeps working offline");
+}
+function go(page){
+  document.querySelectorAll('.navitem').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  render(page);
+}
+function closeModal(){ document.getElementById('modalBackdrop').classList.remove('show'); }
+function openModal(html){
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalBackdrop').classList.add('show');
+}
+
+function render(page){
+  const main = document.getElementById('main');
+  if(page==='home')  main.innerHTML = pageHome();
+  if(page==='learn') { main.innerHTML = pageLearn(); bindLearnEvents(); }
+  if(page==='games') { main.innerHTML = pageGames(); buildLevelGrid(); }
+  if(page==='chat')  { main.innerHTML = pageChat(); bindChatEvents(); }
+  if(page==='world') main.innerHTML = pageWorld();
+}
+
+function pageHome(){
+  return `
+    <h1 class="page-title">Good morning</h1>
+    <p class="page-sub">Everything below (except Emerging) works with zero signal.</p>
+
+    <div class="bar learn" onclick="go('learn')">
+      <div class="bar-icon">📘</div>
+      <div><p class="bar-title">Learn</p><p class="bar-desc">Academics, My Books & Language — all in one place</p></div>
+      <span class="chev">›</span>
+    </div>
+
+    <div class="bar games" onclick="go('games')">
+      <div class="bar-icon">🧮</div>
+      <div><p class="bar-title">Games</p><p class="bar-desc">Level ${state.games.unlocked} of 100 · not graded</p></div>
+      <span class="chev">›</span>
+    </div>
+
+    <div class="bar chat" onclick="go('chat')">
+      <div class="bar-icon">💬</div>
+      <div><p class="bar-title">Online Chatbot</p><p class="bar-desc">Ask anything you've studied — offline AI</p></div>
+      <span class="chev">›</span>
+    </div>
+
+    <div class="bar world" onclick="go('world')">
+      <div class="bar-icon">🌍</div>
+      <div><p class="bar-title">Emerging</p><p class="bar-desc">Latest news & innovation · opens in Chrome</p></div>
+      <span class="chev">›</span>
+    </div>
+  `;
+}
+
+function pageLearn(){
+  const tab = state.learnTab;
+  return `
+    <h1 class="page-title">Learn</h1>
+    <p class="page-sub">All education content, subjects, and tools</p>
+    <div class="sub-tab-row">
+      <div class="sub-tab ${tab==='academics'?'active':''}" onclick="setLearnTab('academics')">Academics</div>
+      <div class="sub-tab ${tab==='books'?'active':''}" onclick="setLearnTab('books')">My Books</div>
+      <div class="sub-tab ${tab==='lang'?'active':''}" onclick="setLearnTab('lang')">Language</div>
+    </div>
+    ${tab==='academics' ? learnAcademics() : tab==='books' ? learnBooks() : learnLanguage()}
+  `;
+}
+function setLearnTab(t){ state.learnTab = t; render('learn'); }
+
+function learnAcademics(){
+  const a = state.academics;
+  const pct = Math.round((a.storageUsedMB/a.storageCapMB)*100);
+  return `
+    <div class="card">
+      <p class="card-title">Grade 8 · Science <span class="badge">downloaded</span></p>
+      <p class="muted">Storage used: ${a.storageUsedMB}MB / ${a.storageCapMB}MB</p>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%; ${pct>85?'background:linear-gradient(90deg,#e8a06a,var(--danger));':''}"></div></div>
+      <button class="ghost" onclick="downloadNewPack()">+ Download Grade 9 · Math pack</button>
+    </div>
+    <div class="card">
+      <p class="card-title">Ask about Science</p>
+      <p class="muted">Try: "ice float", "photosynthesis", "magnet", "density", "water cycle"</p>
+      <input type="text" id="acQuery" placeholder="e.g. Why does ice float on water?">
+      <button class="primary" onclick="askAcademics()">Ask</button>
+      <div id="acAnswer"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">Your level: <strong style="color:var(--banyan)">${a.level}</strong></p>
+      <p class="muted">${a.quizScore}/${a.quizTotal||0} correct so far</p>
+      <button class="primary" style="background:var(--banyan);color:#fff" onclick="quizStep()">Try a quiz question</button>
+    </div>
+  `;
+}
+function bindLearnEvents(){
+  document.getElementById('acQuery')?.addEventListener('keydown', e=>{ if(e.key==='Enter') askAcademics(); });
+  document.getElementById('bookQuery')?.addEventListener('keydown', e=>{ if(e.key==='Enter') askBooks(); });
+}
+function askAcademics(){
+  const q = document.getElementById('acQuery').value.trim();
+  if(!q) return;
+  const ans = mockAnswer(retrieve(q, lessonLibrary, 1));
+  document.getElementById('acAnswer').innerHTML = `<div class="ans-box">${ans.text}${ans.source?`<span class="ans-source">GROUNDED IN CHUNK: ${ans.source} · offline</span>`:""}</div>`;
+  speak(ans.text);
+}
+function quizStep(){
+  const a = state.academics;
+  const correct = Math.random() > 0.4;
+  a.quizTotal++; if(correct) a.quizScore++;
+  const ratio = a.quizScore/a.quizTotal;
+  a.level = ratio>0.7 ? "strong" : ratio<0.4 ? "weak" : "average";
+  toast(correct ? "Correct! Level: "+a.level : "Not quite — level adapting: "+a.level);
+  render('learn');
+}
+function downloadNewPack(){
+  const a = state.academics;
+  const newPackSize = 210;
+  if(a.storageUsedMB + newPackSize > a.storageCapMB){
+    openModal(`
+      <h3>⚠ Storage almost full</h3>
+      <p>Delete an old grade/subject pack to add "Grade 9 · Math" (${newPackSize}MB)?</p>
+      ${a.packs.map((p,i)=>`
+        <div class="modal-opt" onclick="deletePackAndDownload(${i})">
+          <span>${p.label} (${p.sizeMB}MB)</span><span style="color:var(--danger)">Delete</span>
+        </div>`).join("")}
+      <div class="modal-cancel" onclick="closeModal()">Cancel</div>
+    `);
+    return;
+  }
+  a.packs.push({id:'g9-math', label:'Grade 9 · Math', sizeMB:newPackSize});
+  a.storageUsedMB += newPackSize;
+  toast("Grade 9 · Math downloaded");
+  render('learn');
+}
+function deletePackAndDownload(i){
+  const a = state.academics;
+  const removed = a.packs.splice(i,1)[0];
+  a.storageUsedMB -= removed.sizeMB;
+  const newPackSize = 210;
+  a.packs.push({id:'g9-math', label:'Grade 9 · Math', sizeMB:newPackSize});
+  a.storageUsedMB += newPackSize;
+  closeModal();
+  toast(`Removed "${removed.label}" — Grade 9 · Math downloaded`);
+  render('learn');
+}
+
+function learnBooks(){
+  return `
+    <div class="card">
+      <p class="card-title">Add a book <span class="badge ${state.myBooks.length>=state.myBooksLimit?'warn':''}">${state.myBooks.length}/${state.myBooksLimit} slots</span></p>
+      <p class="muted">Paste text below (stands in for PDF import + OCR)</p>
+      <input type="text" id="bookTitle" placeholder="Book title">
+      <textarea id="bookText" placeholder="Paste a paragraph or two..."></textarea>
+      <button class="primary" onclick="addBook()">Import & Index</button>
+    </div>
+    <div class="card">
+      <p class="card-title">Your library</p>
+      ${state.myBooks.length===0 ? `<p class="muted">No books yet — nothing stored until you add one.</p>` :
+        state.myBooks.map((b,i)=>`<div class="book-item"><span>${b.title}</span><button onclick="removeBook(${i})">Remove</button></div>`).join("")}
+    </div>
+    ${state.myBooks.length>0 ? `
+    <div class="card">
+      <p class="card-title">Ask about your books</p>
+      <input type="text" id="bookQuery" placeholder="e.g. summarize this">
+      <button class="primary" onclick="askBooks()">Ask</button>
+      <div id="bookAnswer"></div>
+    </div>` : ""}
+  `;
+}
+function addBook(){
+  const title = document.getElementById('bookTitle').value.trim() || "Untitled";
+  const text = document.getElementById('bookText').value.trim();
+  if(!text){ toast("Paste some text first"); return; }
+
+  if(state.myBooks.length >= state.myBooksLimit){
+    const safeTitle = title.replace(/'/g,"");
+    const safeText = text.replace(/'/g,"");
+    openModal(`
+      <h3>⚠ 3-book limit reached</h3>
+      <p>Delete a previous document to add "${title}"?</p>
+      ${state.myBooks.map((b,i)=>`
+        <div class="modal-opt" onclick="deleteBookAndAdd(${i}, '${safeTitle}', '${safeText}')">
+          <span>${b.title}</span><span style="color:var(--danger)">Delete</span>
+        </div>`).join("")}
+      <div class="modal-cancel" onclick="closeModal()">Cancel</div>
+    `);
+    return;
+  }
+  commitAddBook(title, text);
+}
+function commitAddBook(title, text){
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const chunks = [];
+  for(let i=0;i<sentences.length;i+=2){
+    chunks.push({id:"b"+Date.now()+"-"+chunks.length, text: sentences.slice(i,i+2).join(" ")});
+  }
+  state.myBooks.push({id:"book"+Date.now(), title, chunks});
+  toast("Indexed on-device: "+chunks.length+" chunks");
+  render('learn');
+}
+function deleteBookAndAdd(i, title, text){
+  const removed = state.myBooks.splice(i,1)[0];
+  closeModal();
+  toast(`Removed "${removed.title}" + its index entries`);
+  commitAddBook(title || "Untitled", text || "Imported text.");
+}
+function removeBook(i){ state.myBooks.splice(i,1); render('learn'); toast("Book and its index removed"); }
+function askBooks(){
+  const q = document.getElementById('bookQuery').value.trim();
+  if(!q) return;
+  const ans = mockAnswer(retrieve(q, allBookChunks(), 1));
+  document.getElementById('bookAnswer').innerHTML = `<div class="ans-box">${ans.text}${ans.source?`<span class="ans-source">FROM YOUR BOOK · offline</span>`:""}</div>`;
+  speak(ans.text);
+}
+
+function learnLanguage(){
+  return `
+    <div class="card">
+      <p class="card-title">Pronunciation practice</p>
+      <p class="muted">Tap and speak a word — scored on-device (uses your browser's mic in this demo)</p>
+      <button class="primary" onclick="mockPronounce()">🎙️ Speak "photosynthesis"</button>
+      <div id="langResult"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">Conversation partner</p>
+      <p class="muted">Simulated AI dialogue practice, fully offline</p>
+      <button class="primary" style="background:var(--banyan);color:#fff" onclick="mockConvo()">Start a conversation</button>
+      <div id="convoResult"></div>
+    </div>
+  `;
+}
+function mockPronounce(){
+  const score = 60 + Math.floor(Math.random()*35);
+  document.getElementById('langResult').innerHTML = `<div class="ans-box">Pronunciation score: <strong>${score}/100</strong><br><span class="muted">Tip: stress the third syllable — pho-to-SYN-the-sis</span></div>`;
+}
+function mockConvo(){
+  document.getElementById('convoResult').innerHTML = `<div class="ans-box">AI: "Good morning! What did you learn in school today?"<br><span class="muted">(reply out loud — offline speech scoring)</span></div>`;
+}
+
+function pageGames(){
+  return `
+    <h1 class="page-title">Games <span class="badge">not graded</span></h1>
+    <p class="page-sub">Kept separate from your Academic record</p>
+    <div class="card">
+      <p class="card-title">Market Math</p>
+      <p class="muted">100 levels · tap an unlocked level to complete it</p>
+      <div class="level-grid" id="levelGrid"></div>
+    </div>
+  `;
+}
+function buildLevelGrid(){
+  const grid = document.getElementById('levelGrid');
+  let html = "";
+  for(let i=1;i<=32;i++){
+    let cls = "locked";
+    if(state.games.completed.includes(i)) cls = "done";
+    else if(i === state.games.unlocked) cls = "current";
+    html += `<button class="lvl ${cls}" onclick="playLevel(${i})">${i}</button>`;
+  }
+  grid.innerHTML = html + `<button class="lvl locked" disabled>+68</button>`;
+}
+function playLevel(n){
+  if(n !== state.games.unlocked){
+    toast(n < state.games.unlocked ? "Already completed" : "Complete earlier levels first");
+    return;
+  }
+  state.games.completed.push(n);
+  state.games.unlocked = n+1;
+  toast("Level "+n+" complete! Level "+(n+1)+" unlocked");
+  buildLevelGrid();
+}
+
+function pageChat(){
+  return `
+    <h1 class="page-title">Online Chatbot</h1>
+    <p class="page-sub">Ask anything — searches your syllabus AND your books, fully offline</p>
+    <div class="card">
+      <input type="text" id="chatQuery" placeholder="e.g. Why does ice float? or ask about your book">
+      <button class="primary" onclick="askChat()">Ask</button>
+      <div id="chatAnswer"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">History</p>
+      ${state.chatHistory.length===0 ? `<p class="muted">No questions asked yet.</p>` :
+        state.chatHistory.slice().reverse().map(h=>`<p class="muted" style="margin:4px 0">• ${h}</p>`).join("")}
+    </div>
+  `;
+}
+function bindChatEvents(){
+  document.getElementById('chatQuery')?.addEventListener('keydown', e=>{ if(e.key==='Enter') askChat(); });
+}
+function askChat(){
+  const q = document.getElementById('chatQuery').value.trim();
+  if(!q) return;
+  const combined = [...lessonLibrary, ...allBookChunks()];
+  const ans = mockAnswer(retrieve(q, combined, 1));
+  const fromBook = state.myBooks.some(b=>b.chunks.some(c=>c.id===ans.source));
+  document.getElementById('chatAnswer').innerHTML = `<div class="ans-box">${ans.text}${ans.source?`<span class="ans-source">${fromBook?'FROM YOUR BOOKS':'FROM SYLLABUS'} · offline</span>`:""}</div>`;
+  state.chatHistory.push(q);
+  speak(ans.text);
+}
+
+function pageWorld(){
+  return `
+    <h1 class="page-title">Emerging</h1>
+    <p class="page-sub">Latest news, education news, innovation</p>
+    <div class="card">
+      <p class="card-title">${state.online ? "Ready to browse" : "⚠ No internet"}</p>
+      <p class="muted">${state.online ? "This opens your device's Chrome browser — leaves the offline app experience." : "Emerging needs a connection. Try Learn or Games offline, or visit a Wi-Fi kiosk."}</p>
+      <button class="primary" onclick="openEmerging()">${state.online ? "Open in Chrome →" : "Retry connection"}</button>
+    </div>
+  `;
+}
+function openEmerging(){
+  if(!state.online){ toggleNet(); render('world'); return; }
+  toast("Opening Chrome — leaving the offline app");
+  window.open("https://news.google.com/search?q=education%20innovation", "_blank");
+}
+
+render('home');
+</script>
+</body>
+</html>
